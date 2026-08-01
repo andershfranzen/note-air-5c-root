@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('Setup', 'Diagnose', 'Backup', 'Root', 'Resume', 'Restore', 'Verify', 'Status', 'PrivacyAudit', 'PrivacyHome', 'PrivacyHarden', 'PrivacyRestore', 'SelfTest')]
+    [ValidateSet('Setup', 'Diagnose', 'Backup', 'Root', 'Resume', 'ReturnStock', 'Restore', 'Verify', 'Status', 'PrivacyAudit', 'PrivacyHome', 'PrivacyHarden', 'PrivacyRestore', 'SelfTest')]
     [string]$Command = 'Diagnose',
 
     [string]$RunPath,
@@ -26,6 +26,46 @@ Import-Module $privacyModulePath -Force
 $common = @{
     ProjectRoot = $PSScriptRoot
     NonInteractive = [bool]$NonInteractive
+}
+
+function Invoke-NoteAir5CReturnStock {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$RunPath,
+        [switch]$AcknowledgeDataWipe,
+        [switch]$AcknowledgePrivacyRestore,
+        [switch]$ForceEmergencyRestore,
+        [switch]$NonInteractive
+    )
+    $privacyStatus = $null
+    try {
+        $privacyStatus = Get-NoteAir5CPrivacyStatus -ProjectRoot $PSScriptRoot -NonInteractive:$NonInteractive
+    } catch {
+        if (-not $ForceEmergencyRestore) { throw }
+        Write-Warning "Privacy state could not be inspected because Android/root is unavailable. The mandatory factory reset after relocking removes userdata Magisk modules. $($_.Exception.Message)"
+    }
+
+    if ($privacyStatus -and $privacyStatus.RequiresRestore) {
+        if (-not $privacyStatus.RecordAvailable) {
+            throw 'The BOOX privacy Magisk module is present, but no matching applied recovery record exists. Refusing to remove root until the privacy state can be recovered safely.'
+        }
+        if ([string]$privacyStatus.RunPath -ne [string](Resolve-Path -LiteralPath $RunPath).Path) {
+            throw "Privacy recovery belongs to '$($privacyStatus.RunPath)', but stock return was given '$RunPath'. Use the same rooted run for both operations."
+        }
+        Write-Host 'Restoring recorded privacy, package, settings, and launcher state before removing root...' -ForegroundColor Yellow
+        Invoke-NoteAir5CPrivacyRestore -ProjectRoot $PSScriptRoot `
+            -AcknowledgePrivacyRestore:$AcknowledgePrivacyRestore `
+            -RebootDevice `
+            -NonInteractive:$NonInteractive | Out-Host
+    } else {
+        Write-Host 'No active BOOX privacy hardening record or module needs restoration.' -ForegroundColor Green
+    }
+
+    Invoke-NoteAir5CRestore -ProjectRoot $PSScriptRoot `
+        -RunPath $RunPath `
+        -AcknowledgeDataWipe:$AcknowledgeDataWipe `
+        -ForceEmergencyRestore:$ForceEmergencyRestore `
+        -NonInteractive:$NonInteractive
 }
 
 switch ($Command) {
@@ -67,6 +107,17 @@ switch ($Command) {
             -RunPath $RunPath `
             -AcknowledgeDataWipe:$AcknowledgeDataWipe `
             -ForceEmergencyRestore:$ForceEmergencyRestore
+    }
+    'ReturnStock' {
+        if ([string]::IsNullOrWhiteSpace($RunPath)) {
+            throw 'ReturnStock requires -RunPath pointing to the run that created this root.'
+        }
+        Invoke-NoteAir5CReturnStock `
+            -RunPath $RunPath `
+            -AcknowledgePrivacyRestore:$AcknowledgePrivacyRestore `
+            -AcknowledgeDataWipe:$AcknowledgeDataWipe `
+            -ForceEmergencyRestore:$ForceEmergencyRestore `
+            -NonInteractive:$NonInteractive
     }
     'Verify' {
         Invoke-NoteAir5CVerify @common -RunPath $RunPath

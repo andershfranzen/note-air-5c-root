@@ -1473,7 +1473,7 @@ function Invoke-NoteAir5CRoot {
 Root verified at $([DateTime]::UtcNow.ToString('o')).
 
 Recovery command (from the project root):
-  pwsh ./Root-NoteAir5C.ps1 -Command Restore -RunPath `"$($state.runPath)`"
+  pwsh ./Root-NoteAir5C.ps1 -Command ReturnStock -RunPath `"$($state.runPath)`"
 
 Keep the entire run directory private and offline. It contains device-unique
 identity and calibration partitions. Restore stock before accepting a BOOX OTA.

@@ -792,6 +792,32 @@ function Get-LatestPrivacyRecord {
     $null
 }
 
+function Get-NoteAir5CPrivacyStatus {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$ProjectRoot,
+        [switch]$NonInteractive
+    )
+    $context = Assert-PrivacyTarget $ProjectRoot
+    $latest = Get-LatestPrivacyRecord -PrivacyRoot (Join-Path $context.RunPath 'privacy')
+    $moduleProbe = Invoke-PrivacyRootShell -Target $context.Target -Command 'if [ -d /data/adb/modules/boox-privacy ]; then echo present; else echo absent; fi' -AllowFailure
+    if ($moduleProbe.ExitCode -ne 0) { throw 'Could not inspect the BOOX privacy Magisk module before stock return.' }
+    $modulePresent = $moduleProbe.Output.Trim() -eq 'present'
+    $recordAvailable = $null -ne $latest
+    $hasSystemlessPurge = $recordAvailable -and $latest.Record.PSObject.Properties['purgedPaths'] -and @($latest.Record.purgedPaths).Count -gt 0
+    [pscustomobject]@{
+        Serial = $context.Target.Serial
+        Fingerprint = $context.Fingerprint
+        RunPath = $context.RunPath
+        ModulePresent = $modulePresent
+        RecordAvailable = $recordAvailable
+        RequiresRestore = ($modulePresent -or $recordAvailable)
+        RecordPath = $(if ($recordAvailable) { $latest.Path } else { $null })
+        RecordStatus = $(if ($recordAvailable) { [string]$latest.Record.status } else { $null })
+        HasSystemlessPurge = [bool]$hasSystemlessPurge
+    }
+}
+
 function Invoke-NoteAir5CPrivacyRestore {
     [CmdletBinding()]
     param(
@@ -849,6 +875,7 @@ function Invoke-NoteAir5CPrivacyRestore {
 Export-ModuleMember -Function @(
     'Get-PrivacyPolicy',
     'Test-PrivacyPolicy',
+    'Get-NoteAir5CPrivacyStatus',
     'Invoke-NoteAir5CPrivacyAudit',
     'Invoke-NoteAir5CPrivacyHome',
     'Invoke-NoteAir5CPrivacyHarden',

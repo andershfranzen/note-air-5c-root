@@ -57,7 +57,7 @@ The main menu is keyboard-driven: use Up/Down or Left/Right to move, Enter to se
 | **2 — Verify Root** | Read-only proof of model, firmware, slot, boot lock/verified state, Magisk version, and root shell. |
 | **3 — Status** | Shows USB/tool readiness, the latest private run, and what its current checkpoint means. |
 | **4 — Setup / Repair Tools** | Downloads pinned artifacts, verifies size/SHA-256, creates the EDL Python environment, and offers host USB/dependency setup. |
-| **5 — Restore Stock** | Uses the selected matching run to restore stock boot and relock only after the restore gates pass. This can reset userdata again. |
+| **5 — Return Fully to Stock** | Restores any recorded privacy/package/launcher changes while root is still available, then restores stock boot, relocks, and guides the required userdata reset. |
 | **6 — Safe UI Preview** | Renders the complete walkthrough without accessing or changing a tablet. |
 | **7 — Privacy Hardening** | Opens the audit, firewall, purge, Vendor Lockdown, clean-home, and exact-state restore submenu. |
 | **Q — Quit** | Exits without making a new change. |
@@ -235,13 +235,15 @@ Never resume an old run after an OTA or active-slot change. Start a new diagnost
 
 ## Return to stock
 
-Use the same run that created the root. Restore validates the private backup, checks the live firmware and active slot, restores the original active-slot boot image, changes only the current `devinfo` lock flags back to locked while preserving its newer monotonic date, and reads both partitions back before resetting:
+Use the same run that created the root. **Return Fully to Stock** first removes the recorded privacy Magisk module and restores the exact saved package, settings, and launcher state while root is still available. It reboots and verifies that recovery, then validates the private partition backup, checks the live firmware and active slot, restores the original active-slot boot image, changes only the current `devinfo` lock flags back to locked while preserving its newer monotonic date, and reads both partitions back before resetting:
 
 ```powershell
-pwsh ./Root-NoteAir5C.ps1 -Command Restore -RunPath './runs/<run>'
+pwsh ./Root-NoteAir5C.ps1 -Command ReturnStock -RunPath './runs/<run>'
 ```
 
-Changing back to locked can invalidate userdata again. Expect another factory reset. The explicit emergency route is only for a genuinely non-booting tablet already in EDL:
+For unattended use, add both `-AcknowledgePrivacyRestore` and `-AcknowledgeDataWipe`; interactive use asks for exact confirmation phrases. Changing back to locked invalidates userdata encryption again, so expect Android Recovery to require **Factory data reset** before stock Android can boot.
+
+The lower-level `Restore` command skips privacy-state recovery and is retained only for troubleshooting. The explicit emergency route is only for a genuinely non-booting tablet already in EDL:
 
 ```powershell
 pwsh ./Root-NoteAir5C.ps1 -Command Restore -RunPath './runs/<run>' -AcknowledgeDataWipe -ForceEmergencyRestore

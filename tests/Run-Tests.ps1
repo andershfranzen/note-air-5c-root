@@ -177,6 +177,7 @@ $privacySource = Get-Content -LiteralPath $privacyModulePath -Raw
 Assert-True ($privacySource -match 'Where-Object \{ \$_ -ge 10000 \}' -and $privacySource -match '1000 -in \$vendorUids') 'Lockdown inventory persists application UIDs only and rejects accidental shared UID 1000 inclusion'
 Assert-True ($privacySource -match '\.replace' -and $privacySource -match '\^/system/\(app\|priv-app\)/') 'systemless purge uses Magisk replace markers behind an exact APK-path allowlist'
 Assert-True ($privacySource -match 'Backup-PrivacyHomeLayout' -and $privacySource -match 'Restore-PrivacyHomeLayout' -and $privacySource -match 'Set-PrivacyCleanHomeLayout') 'privacy recovery records and restores the BOOX launcher layout'
+Assert-True ($privacySource -match 'function Get-NoteAir5CPrivacyStatus' -and $privacySource -match 'RequiresRestore' -and $privacySource -match 'RecordAvailable') 'privacy engine exposes guarded stock-return recovery status'
 $homeHelperSource = Get-Content -LiteralPath (Join-Path $projectRoot 'src/boox_home_layout.py') -Raw
 Assert-True ($homeHelperSource -match 'EXPECTED_COLUMNS' -and $homeHelperSource -match 'PRAGMA integrity_check' -and $homeHelperSource -match 'Unknown launcher schema') 'home-layout helper gates the exact SQLite schema and integrity'
 Assert-True ($homeHelperSource -match 'com\.android\.vending' -and $homeHelperSource -match 'com\.topjohnwu\.magisk' -and $homeHelperSource -match 'STORAGE_ACTION' -and $homeHelperSource -match 'SETTINGS_ACTION') 'home-layout helper encodes the requested desktop and dock allowlists'
@@ -189,6 +190,7 @@ $wizardErrors = $null
 Assert-True ($wizardErrors.Count -eq 0) 'guided console parses cleanly'
 Assert-True ($wizardSource -match '\[Console\]::ReadKey' -and $wizardSource -match 'UpArrow' -and $wizardSource -match 'DownArrow' -and $wizardSource -match 'ConsoleKey\]::Enter') 'guided console supports arrow-key selection and Enter'
 Assert-True ($wizardSource -match 'PRIVACY HARDENING' -and $wizardSource -match 'PrivacyAudit' -and $wizardSource -match 'PrivacyHome' -and $wizardSource -match 'PrivacyHarden' -and $wizardSource -match 'PrivacyProfile Purge' -and $wizardSource -match 'PrivacyProfile Lockdown' -and $wizardSource -match 'PrivacyRestore') 'guided console exposes audit, home layout, harden, purge, lockdown, and restore actions'
+Assert-True ($wizardSource -match 'RETURN FULLY TO STOCK' -and $wizardSource -match 'Command ReturnStock' -and $wizardSource -match 'AcknowledgePrivacyRestore') 'guided stock return restores privacy state before relocking'
 $demoOutput = (& $wizardPath -Action Demo -NoClear 6>&1 | Out-String)
 Assert-True ($demoOutput -match 'DEMO COMPLETE' -and $demoOutput -match 'FACTORY RESET' -and $demoOutput -match 'VERIFY REAL ROOT') 'guided console demo covers manual checkpoints without running the engine'
 $launcher = Get-Content -LiteralPath (Join-Path $projectRoot 'Start-NoteAir5C.cmd') -Raw

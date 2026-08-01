@@ -447,16 +447,18 @@ function Invoke-GuidedRoot {
 }
 
 function Invoke-GuidedRestore {
-    Write-Banner 'Guided stock restore'
+    Write-Banner 'Return fully to stock'
     $state = Get-LatestRunState
     if (-not $state) { throw 'No run state is available for restore.' }
     Write-Stage 1 'Review recovery target' @(
         "Run: $($state.id)",
         "Firmware: $($state.device.fingerprint)",
         "Recorded active slot: $($state.device.slot)",
-        'Restoring the locked state can require another factory reset.'
+        'Any active privacy firewall, debloat, and home-layout changes are restored first.',
+        'The original stock boot is then written and the verified-boot flags are relocked.',
+        'Relocking invalidates userdata encryption and requires another factory reset.'
     ) -Color Yellow
-    Confirm-ExactPhrase -Phrase 'RESTORE STOCK' -Prompt 'This writes the verified stock boot and returns only the current devinfo lock flags to locked.'
+    Confirm-ExactPhrase -Phrase 'RETURN FULLY STOCK' -Prompt 'This restores recorded privacy state, writes verified stock boot, relocks the tablet, and erases userdata.'
     $serial = [string]$state.device.adbSerial
     $adbLine = Get-AdbLine -Serial $serial
     if ($adbLine -and $adbLine -match '\bunauthorized\b') {
@@ -468,8 +470,9 @@ function Invoke-GuidedRestore {
     if ($emergency) {
         Confirm-ExactPhrase -Phrase 'EMERGENCY RESTORE' -Prompt 'Android is unavailable, so firmware and active slot cannot be checked. Use this only when the tablet is already in EDL and this is the matching run.'
     }
-    Invoke-Engine -Command Restore -RunPath ([string]$state.runPath) -AcknowledgeDataWipe -NonInteractive -ForceEmergencyRestore:$emergency
-    Write-Ok 'Stock restore writes completed and read back successfully.'
+    Invoke-Engine -Command ReturnStock -RunPath ([string]$state.runPath) -AcknowledgePrivacyRestore -AcknowledgeDataWipe -NonInteractive -ForceEmergencyRestore:$emergency
+    Write-Ok 'Privacy recovery, stock boot restore, and relock completed successfully.'
+    Write-Notice 'If Android Recovery says it cannot load Android, choose Factory data reset. This is expected after relocking.'
 }
 
 function Show-Demo {
@@ -665,7 +668,7 @@ function Get-MenuItems {
         [pscustomobject]@{ Choice = '2'; Title = 'VERIFY ROOT'; Description = 'Prove fingerprint, slot, boot state, Magisk, and uid=0.'; Color = [ConsoleColor]::White }
         [pscustomobject]@{ Choice = '3'; Title = 'STATUS'; Description = 'Inspect USB, tools, latest run, and resumable checkpoint.'; Color = [ConsoleColor]::White }
         [pscustomobject]@{ Choice = '4'; Title = 'SETUP / REPAIR TOOLS'; Description = "Install verified downloads and $script:PlatformLabel host dependencies."; Color = [ConsoleColor]::White }
-        [pscustomobject]@{ Choice = '5'; Title = 'RESTORE STOCK'; Description = 'Restore the matching stock boot image and lock flags.'; Color = [ConsoleColor]::Yellow }
+        [pscustomobject]@{ Choice = '5'; Title = 'RETURN FULLY TO STOCK'; Description = 'Undo privacy changes, restore stock boot, relock, and reset userdata.'; Color = [ConsoleColor]::Yellow }
         [pscustomobject]@{ Choice = '6'; Title = 'SAFE UI PREVIEW'; Description = 'Walk every screen without touching the tablet.'; Color = [ConsoleColor]::White }
         [pscustomobject]@{ Choice = '7'; Title = 'PRIVACY HARDENING'; Description = 'Audit, firewall, debloat, or restore BOOX network privacy.'; Color = [ConsoleColor]::Magenta }
         [pscustomobject]@{ Choice = 'q'; Title = 'QUIT'; Description = 'Close the assistant without changing the tablet.'; Color = [ConsoleColor]::DarkGray }
