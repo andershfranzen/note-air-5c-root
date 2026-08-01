@@ -1,6 +1,6 @@
 # Note Air 5C root assistant
 
-A resumable Windows, Linux, and macOS rooting assistant for a user-owned BOOX Note Air 5C. It backs up the tablet through Qualcomm EDL, patches the device's own active boot image with pinned Magisk binaries, changes only the validated `devinfo` unlock bytes, verifies every write by reading it back, and retains a guarded stock-restore route.
+A resumable Windows, Linux, and macOS rooting assistant for a user-owned BOOX Note Air 5C, plus a separate non-root stock-privacy workflow. The root path backs up the tablet through Qualcomm EDL, patches the device's own active boot image with pinned Magisk binaries, changes only the validated `devinfo` unlock bytes, verifies every write by reading it back, and retains a guarded stock-restore route. The stock-privacy path never touches boot partitions or Android integrity.
 
 The complete workflow has been exercised successfully on firmware 4.2.1 build `rel_0702_038ed12af`: full EDL backup, verified writes, factory reset, Magisk 30.7 initialization, and a live `uid=0(root)` shell. Other firmware remains subject to the allow-list policy below.
 
@@ -31,6 +31,7 @@ The optional clean-home step groups BOOX shortcuts into **Tool**, keeps only Pla
 | Root proof | Verifies unlocked/orange verified-boot state, Magisk version, exact firmware/slot, and a live `uid=0(root)` shell |
 | Stock recovery | Restores the matching stock boot image and only the validated lock bytes from the same private run |
 | Privacy | Audits BOOX packages/endpoints, installs a systemless hosts/firewall module, offers reversible debloat/purge, and records exact restore state |
+| Stock privacy | On a locked, green, unrooted tablet, reversibly removes optional packages, disables BOOX Cloud/sync, replaces vendor connectivity endpoints, exports DNS/router lists, and opens a rootless-firewall guide |
 | Vendor Lockdown | Systemlessly removes cloud sync and denies WAN for dedicated `com.onyx` app UIDs while preserving shared Android networking services |
 | Clean launcher | Atomically backs up, validates, normalizes, verifies, and can restore the BOOX launcher SQLite layout |
 | Host support | One PowerShell state machine with native Windows, Linux, and macOS launchers/tool downloads |
@@ -47,7 +48,7 @@ The safety state machine is shared on all three hosts through PowerShell. The la
 
 PowerShell 7 (`pwsh`) is required on Linux and macOS. The `.sh` file is intentionally a native launcher rather than a second rooting implementation, so resume files, safety gates, and write verification cannot drift between platforms. WSL is not treated as a supported Linux host because direct Qualcomm USB/EDL access is not reliably equivalent to native Linux.
 
-The main menu is keyboard-driven: use Up/Down or Left/Right to move, Enter to select, `1`-`7` as direct shortcuts, and Esc or `Q` to quit. Redirected input automatically falls back to a typed prompt for scripts and tests.
+The main menu is keyboard-driven: use Up/Down or Left/Right to move, Enter to select, `1`-`8` as direct shortcuts, and Esc or `Q` to quit. Redirected input automatically falls back to a typed prompt for scripts and tests.
 
 ## Main menu
 
@@ -60,6 +61,7 @@ The main menu is keyboard-driven: use Up/Down or Left/Right to move, Enter to se
 | **5 — Return Fully to Stock** | Restores any recorded privacy/package/launcher changes while root is still available, then restores stock boot, relocks, and guides the required userdata reset. |
 | **6 — Safe UI Preview** | Renders the complete walkthrough without accessing or changing a tablet. |
 | **7 — Privacy Hardening** | Opens the audit, firewall, purge, Vendor Lockdown, clean-home, and exact-state restore submenu. |
+| **8 — Stock Privacy (No Root)** | Opens the locked/green non-root audit, reversible package/endpoint profile, rootless-firewall guide, and exact-state restore. |
 | **Q — Quit** | Exits without making a new change. |
 
 ## Quick start
@@ -160,6 +162,36 @@ The console finds the newest `state.json` and resumes from its last verified che
 6. Prove the exact firmware, active slot, unlocked/orange boot state, Magisk 30.7, and `uid=0`.
 
 If a command stops while the tablet remains in EDL, that is intentional. The assistant never resets the device after a failed write/read-back comparison.
+
+## Stock privacy without root
+
+Choose **Stock Privacy (No Root)** on a factory-stock tablet. This workflow refuses to run unless the connected device is exactly a Note Air 5C on an allow-listed firmware, verified boot is locked and green, and neither Magisk nor a root shell exists. It does not use EDL, write a partition, unlock the bootloader, reset userdata, or change Android device integrity.
+
+| Option | Action |
+|---|---|
+| **Read-only stock audit** | Records the exact serial/firmware/integrity state, targeted and protected packages, BOOX connectivity settings, Private DNS, and always-on VPN state. |
+| **Apply stock privacy** | User-uninstalls iGet Shop, BOOX AI, BOOX App Market, factory production test, and vendor Chromium; disables `com.onyx.android.ksync`; replaces BOOX NTP/captive-portal URLs with Cloudflare/Google; exports plain-domain, Adblock, and IPv4 deny lists. |
+| **Set up rootless firewall** | Downloads the pinned official Rethink DNS + Firewall APK, verifies GitHub's published size/SHA-256, installs and opens it, then explains Android's mandatory VPN-consent, always-on, lockdown, Microsoft/Google allow, and shared-UID safety rules. |
+| **Verify stock privacy** | Re-proves locked/green/no-root state, every package and endpoint change, the pinned Rethink version, Always-on VPN, lockdown, and a validated non-bypassable VPN. It also prints the expected private-rule counts for an on-device check. |
+| **Restore exact stock state** | Uses only the newest matching recovery record to return every package install/enabled state and connectivity setting exactly to its pre-apply value. |
+
+The protected set includes the BOOX launcher, reader, notes, keyboards, OTA service, calibration, Play Store, Play Services, and Android VPN dialogs. BOOX Cloud and BOOX note synchronization are deliberately disabled, but local reading and local note-taking remain available. `pm uninstall --user 0` does not delete the factory APK from the read-only system image; the restore path uses Android's `install-existing` operation and verifies every state transition.
+
+The compatibility-preserving Rethink policy contains **35 on-device domain rules, one IPv4 rule, and 12 dedicated BOOX application rules**. It blocks every documented BOOX host in `config/privacy-policy.json` except `oss-cn-shenzhen.aliyuncs.com`: that is shared Alibaba object storage, so blocking it on the tablet can break unrelated applications. The complete 36-host export retains it for people who deliberately want the broader router-level rule. The per-app set covers dedicated BOOX reader, note, keyboard, utility, gallery, mail, media, and floating-button UIDs. It never blocks `com.onyx`, `ksync`, calibration, or another UID 1000 package as a network UID; BOOX Cloud/sync is disabled at package level instead.
+
+DNS filtering and Android `VpnService` are useful containment layers, not proof that privileged firmware can never communicate. A DNS list does not stop an unknown or future hard-coded IP, and an Android rootless firewall occupies a VPN slot. If an employer requires Microsoft Tunnel or another corporate VPN, keep the package/endpoint profile and enforce the generated lists at the router or managed DNS instead. Never deny networking to `com.onyx` or another shared UID 1000 group: doing so also blocks unrelated Android, Google, and Microsoft connectivity. Rethink's rule database is private app data, so the verifier cannot read it through non-root ADB; compare the three printed counts in Rethink after changing or importing rules.
+
+Direct commands:
+
+```powershell
+pwsh ./Root-NoteAir5C.ps1 -Command StockPrivacyAudit
+pwsh ./Root-NoteAir5C.ps1 -Command StockPrivacyApply
+pwsh ./Root-NoteAir5C.ps1 -Command StockPrivacyFirewall -InstallStockPrivacyFirewall
+pwsh ./Root-NoteAir5C.ps1 -Command StockPrivacyVerify
+pwsh ./Root-NoteAir5C.ps1 -Command StockPrivacyRestore
+```
+
+For deliberate non-interactive use, Apply requires `-AcknowledgeStockPrivacy` and Restore requires `-AcknowledgeStockPrivacyRestore`. Recovery records and generated blocklists remain private under `runs/stock-privacy/`.
 
 ## Privacy hardening and reversible debloat
 
@@ -270,11 +302,13 @@ Start-NoteAir5C.cmd             Windows launcher (prefers PowerShell 7)
 Start-NoteAir5C.sh              Linux/macOS launcher
 src/NoteAir5C.Root.psm1         shared state machine and safety gates
 src/NoteAir5C.Privacy.psm1      privacy, package, firewall, and launcher recovery engine
+src/NoteAir5C.StockPrivacy.psm1 locked/green non-root privacy and exact rollback engine
 src/boox_home_layout.py         schema-gated BOOX launcher SQLite normalizer
 config/artifacts.json           pinned per-OS downloads, sizes, and hashes
 config/firmware-profiles.json   firmware allow-list and observations
 config/51-noteair5c.rules       scoped Linux BOOX/EDL USB access
 config/privacy-policy.json      documented hosts, profiles, and protected apps
+config/stock-privacy-policy.json non-root package, endpoint, and protected-component policy
 privacy/magisk-module/          systemless hosts and scoped app firewall
 docs/home-screen.png            validated clean-home result shown above
 tests/Run-Tests.ps1             offline self-tests

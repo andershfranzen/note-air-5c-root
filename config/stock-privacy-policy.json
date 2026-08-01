@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "id": "stock-compatible",
+  "description": "Non-root BOOX privacy profile that removes optional cloud/commercial packages and replaces vendor connectivity endpoints while preserving Android integrity, Google/Microsoft services, and core BOOX applications.",
+  "packages": [
+    { "id": "com.onyx.igetshop", "action": "uninstall-user", "reason": "Optional DeDao storefront and commercial analytics" },
+    { "id": "com.onyx.aiassistant", "action": "uninstall-user", "reason": "Optional cloud AI service" },
+    { "id": "com.onyx.appmarket", "action": "uninstall-user", "reason": "Optional BOOX application store" },
+    { "id": "com.onyx.android.production.test", "action": "uninstall-user", "reason": "Factory production-test application" },
+    { "id": "org.chromium.chrome", "action": "uninstall-user", "reason": "Outdated vendor Chromium build" },
+    { "id": "com.onyx.android.ksync", "action": "disable-user", "reason": "BOOX Cloud and note synchronization" }
+  ],
+  "settings": [
+    { "namespace": "global", "name": "ntp_server", "value": "time.cloudflare.com" },
+    { "namespace": "global", "name": "captive_portal_http_url", "value": "http://connectivitycheck.gstatic.com/generate_204" },
+    { "namespace": "global", "name": "captive_portal_https_url", "value": "https://connectivitycheck.gstatic.com/generate_204" },
+    { "namespace": "global", "name": "captive_portal_http_url_config", "value": "{\"captivePortalHttpUrls\":[\"http://connectivitycheck.gstatic.com/generate_204\"],\"captivePortalHttpsUrls\":[\"https://connectivitycheck.gstatic.com/generate_204\"],\"defaultCaptivePortalFallbackUrls\":[\"http://connectivitycheck.android.com/generate_204\"]}" }
+  ],
+  "protectedPackages": [
+    "com.onyx",
+    "com.onyx.kreader",
+    "com.onyx.android.note",
+    "com.onyx.kime",
+    "com.onyx.latinime",
+    "com.onyx.android.onyxotaservice",
+    "com.onyx.tscalibration",
+    "com.android.vending",
+    "com.google.android.gms",
+    "com.android.vpndialogs"
+  ],
+  "firewall": {
+    "packageId": "com.celzero.bravedns",
+    "playStoreUri": "market://details?id=com.celzero.bravedns",
+    "projectUrl": "https://github.com/celzero/rethink-app",
+    "release": "v0.5.5y",
+    "assetUrl": "https://github.com/celzero/rethink-app/releases/download/v0.5.5y/rethink-63-arm64-v8a.apk",
+    "assetBytes": 34134528,
+    "assetSha256": "6ea2146584c7fd92ce1ac9ee78f06b2cc3ef04993ca7bd3d6bc415042bc4f0e0",
+    "releaseCertificateSha256": "1f32d432e81a1dc5c00aafeb0c6636cd7819965d174420e59db9675dff7a88e9",
+    "requiresUserVpnConsent": true,
+    "onDeviceDomainExclusions": [
+      {
+        "host": "oss-cn-shenzhen.aliyuncs.com",
+        "reason": "Shared Alibaba object-storage hostname used by unrelated applications; keep it only in the optional router export."
+      }
+    ],
+    "blockedPackages": [
+      "com.onyx.calculator",
+      "com.onyx.voicerecorder",
+      "com.onyx.clock",
+      "com.onyx.kime",
+      "com.onyx.dict",
+      "com.onyx.kreader",
+      "com.onyx.mail",
+      "com.onyx.gallery",
+      "com.onyx.floatingbutton",
+      "com.onyx.latinime",
+      "com.onyx.musicplayer",
+      "com.onyx.android.note"
+    ]
+  }
+}

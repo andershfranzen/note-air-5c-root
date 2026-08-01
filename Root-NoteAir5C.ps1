@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('Setup', 'Diagnose', 'Backup', 'Root', 'Resume', 'ReturnStock', 'Restore', 'Verify', 'Status', 'PrivacyAudit', 'PrivacyHome', 'PrivacyHarden', 'PrivacyRestore', 'SelfTest')]
+    [ValidateSet('Setup', 'Diagnose', 'Backup', 'Root', 'Resume', 'ReturnStock', 'Restore', 'Verify', 'Status', 'PrivacyAudit', 'PrivacyHome', 'PrivacyHarden', 'PrivacyRestore', 'StockPrivacyAudit', 'StockPrivacyApply', 'StockPrivacyFirewall', 'StockPrivacyVerify', 'StockPrivacyRestore', 'SelfTest')]
     [string]$Command = 'Diagnose',
 
     [string]$RunPath,
@@ -13,6 +13,9 @@ param(
     [ValidateSet('Balanced', 'Purge', 'Lockdown', 'Strict')][string]$PrivacyProfile = 'Balanced',
     [switch]$AcknowledgePrivacyChanges,
     [switch]$AcknowledgePrivacyRestore,
+    [switch]$AcknowledgeStockPrivacy,
+    [switch]$AcknowledgeStockPrivacyRestore,
+    [switch]$InstallStockPrivacyFirewall,
     [switch]$RebootDevice,
     [switch]$NonInteractive
 )
@@ -22,6 +25,8 @@ $modulePath = Join-Path $PSScriptRoot 'src/NoteAir5C.Root.psm1'
 Import-Module $modulePath -Force
 $privacyModulePath = Join-Path $PSScriptRoot 'src/NoteAir5C.Privacy.psm1'
 Import-Module $privacyModulePath -Force
+$stockPrivacyModulePath = Join-Path $PSScriptRoot 'src/NoteAir5C.StockPrivacy.psm1'
+Import-Module $stockPrivacyModulePath -Force
 
 $common = @{
     ProjectRoot = $PSScriptRoot
@@ -142,6 +147,24 @@ switch ($Command) {
         Invoke-NoteAir5CPrivacyRestore @common `
             -AcknowledgePrivacyRestore:$AcknowledgePrivacyRestore `
             -RebootDevice:$RebootDevice
+    }
+    'StockPrivacyAudit' {
+        Invoke-NoteAir5CStockPrivacyAudit @common
+    }
+    'StockPrivacyApply' {
+        Invoke-NoteAir5CStockPrivacyApply @common `
+            -AcknowledgeStockPrivacy:$AcknowledgeStockPrivacy
+    }
+    'StockPrivacyFirewall' {
+        Invoke-NoteAir5CStockPrivacyFirewall @common `
+            -InstallFirewall:$InstallStockPrivacyFirewall
+    }
+    'StockPrivacyVerify' {
+        Invoke-NoteAir5CStockPrivacyVerify @common
+    }
+    'StockPrivacyRestore' {
+        Invoke-NoteAir5CStockPrivacyRestore @common `
+            -AcknowledgeStockPrivacyRestore:$AcknowledgeStockPrivacyRestore
     }
     'SelfTest' {
         & (Join-Path $PSScriptRoot 'tests/Run-Tests.ps1')

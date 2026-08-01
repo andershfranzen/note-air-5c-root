@@ -2,6 +2,7 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Import-Module (Join-Path $projectRoot 'src/NoteAir5C.Root.psm1') -Force
 Import-Module (Join-Path $projectRoot 'src/NoteAir5C.Privacy.psm1') -Force
+Import-Module (Join-Path $projectRoot 'src/NoteAir5C.StockPrivacy.psm1') -Force
 
 $script:passed = 0
 $script:failed = 0
@@ -178,6 +179,26 @@ Assert-True ($privacySource -match 'Where-Object \{ \$_ -ge 10000 \}' -and $priv
 Assert-True ($privacySource -match '\.replace' -and $privacySource -match '\^/system/\(app\|priv-app\)/') 'systemless purge uses Magisk replace markers behind an exact APK-path allowlist'
 Assert-True ($privacySource -match 'Backup-PrivacyHomeLayout' -and $privacySource -match 'Restore-PrivacyHomeLayout' -and $privacySource -match 'Set-PrivacyCleanHomeLayout') 'privacy recovery records and restores the BOOX launcher layout'
 Assert-True ($privacySource -match 'function Get-NoteAir5CPrivacyStatus' -and $privacySource -match 'RequiresRestore' -and $privacySource -match 'RecordAvailable') 'privacy engine exposes guarded stock-return recovery status'
+$stockPolicy = Get-StockPrivacyPolicy -ProjectRoot $projectRoot
+$stockTargetIds = @($stockPolicy.packages.id)
+Assert-True ($stockTargetIds.Count -eq 6 -and 'com.onyx.android.ksync' -in $stockTargetIds -and ($stockPolicy.packages | Where-Object id -eq 'com.onyx.android.ksync').action -eq 'disable-user') 'stock privacy targets five optional apps and disables BOOX cloud sync'
+Assert-True (-not @($stockPolicy.protectedPackages | Where-Object { $_ -in $stockTargetIds }).Count -and 'com.android.vending' -in $stockPolicy.protectedPackages -and 'com.google.android.gms' -in $stockPolicy.protectedPackages) 'stock privacy keeps protected BOOX, Google, and Android components'
+Assert-True (Test-StockPrivacyFirmware -ProjectRoot $projectRoot -Fingerprint 'Onyx/NoteAir5C/NoteAir5C:11/2026-07-02_19-03_4.2.1-rel_0702_038ed12af/3055:user/release-keys') 'stock privacy accepts the device-validated firmware'
+Assert-True (-not (Test-StockPrivacyFirmware -ProjectRoot $projectRoot -Fingerprint 'Onyx/NoteAir5C/NoteAir5C:11/unknown/user:user/release-keys')) 'stock privacy rejects unknown firmware'
+$stockModulePath = Join-Path $projectRoot 'src/NoteAir5C.StockPrivacy.psm1'
+$stockTokens = $null
+$stockErrors = $null
+[void][System.Management.Automation.Language.Parser]::ParseFile($stockModulePath, [ref]$stockTokens, [ref]$stockErrors)
+Assert-True ($stockErrors.Count -eq 0) 'stock privacy module parses cleanly'
+$stockSource = Get-Content -LiteralPath $stockModulePath -Raw
+Assert-True ($stockSource -match "locked -ne '1'" -and $stockSource -match "verified -ne 'green'" -and $stockSource -match 'Stock privacy refuses a rooted tablet') 'stock privacy requires locked green unrooted state'
+Assert-True ($stockSource -notmatch 'Invoke-Edl|Write-VerifiedPartition|iptables|magiskboot' -and $stockSource -match 'install-existing' -and $stockSource -match 'RolledBack') 'stock privacy has no partition/firewall-root writes and includes exact rollback'
+$stockSettings = @($stockPolicy.settings.name)
+Assert-True ('ntp_server' -in $stockSettings -and 'captive_portal_http_url_config' -in $stockSettings) 'stock privacy replaces BOOX NTP and captive-portal endpoints'
+Assert-True ([string]$stockPolicy.firewall.assetUrl -match '^https://github\.com/celzero/rethink-app/releases/' -and [long]$stockPolicy.firewall.assetBytes -gt 1000000 -and [string]$stockPolicy.firewall.assetSha256 -match '^[0-9a-f]{64}$') 'stock privacy pins the official rootless firewall APK by size and SHA-256'
+Assert-True ($stockSource -match 'Get-FileHash' -and $stockSource -match 'assetSha256' -and $stockSource -match 'installedByAssistant') 'stock privacy verifies and recovery-tracks the rootless firewall install'
+Assert-True (@($stockPolicy.firewall.blockedPackages).Count -eq 12 -and @($stockPolicy.firewall.onDeviceDomainExclusions.host) -contains 'oss-cn-shenzhen.aliyuncs.com') 'stock privacy declares 12 dedicated BOOX app rules and excludes shared Alibaba storage on-device'
+Assert-True ($stockSource -match 'function Invoke-NoteAir5CStockPrivacyVerify' -and $stockSource -match 'IS_VALIDATED' -and $stockSource -match 'bypassable=false' -and $stockSource -match 'ExpectedOnDeviceDomainRules') 'stock privacy verifier requires validated non-bypassable VPN and reports private-rule targets'
 $homeHelperSource = Get-Content -LiteralPath (Join-Path $projectRoot 'src/boox_home_layout.py') -Raw
 Assert-True ($homeHelperSource -match 'EXPECTED_COLUMNS' -and $homeHelperSource -match 'PRAGMA integrity_check' -and $homeHelperSource -match 'Unknown launcher schema') 'home-layout helper gates the exact SQLite schema and integrity'
 Assert-True ($homeHelperSource -match 'com\.android\.vending' -and $homeHelperSource -match 'com\.topjohnwu\.magisk' -and $homeHelperSource -match 'STORAGE_ACTION' -and $homeHelperSource -match 'SETTINGS_ACTION') 'home-layout helper encodes the requested desktop and dock allowlists'
@@ -191,6 +212,7 @@ Assert-True ($wizardErrors.Count -eq 0) 'guided console parses cleanly'
 Assert-True ($wizardSource -match '\[Console\]::ReadKey' -and $wizardSource -match 'UpArrow' -and $wizardSource -match 'DownArrow' -and $wizardSource -match 'ConsoleKey\]::Enter') 'guided console supports arrow-key selection and Enter'
 Assert-True ($wizardSource -match 'PRIVACY HARDENING' -and $wizardSource -match 'PrivacyAudit' -and $wizardSource -match 'PrivacyHome' -and $wizardSource -match 'PrivacyHarden' -and $wizardSource -match 'PrivacyProfile Purge' -and $wizardSource -match 'PrivacyProfile Lockdown' -and $wizardSource -match 'PrivacyRestore') 'guided console exposes audit, home layout, harden, purge, lockdown, and restore actions'
 Assert-True ($wizardSource -match 'RETURN FULLY TO STOCK' -and $wizardSource -match 'Command ReturnStock' -and $wizardSource -match 'AcknowledgePrivacyRestore') 'guided stock return restores privacy state before relocking'
+Assert-True ($wizardSource -match 'STOCK PRIVACY  \(NO ROOT\)' -and $wizardSource -match 'Invoke-StockPrivacyGuide' -and $wizardSource -match 'StockPrivacyApply' -and $wizardSource -match 'StockPrivacyFirewall' -and $wizardSource -match 'StockPrivacyVerify' -and $wizardSource -match 'StockPrivacyRestore') 'guided console exposes stock privacy audit, apply, firewall, verify, and restore'
 $demoOutput = (& $wizardPath -Action Demo -NoClear 6>&1 | Out-String)
 Assert-True ($demoOutput -match 'DEMO COMPLETE' -and $demoOutput -match 'FACTORY RESET' -and $demoOutput -match 'VERIFY REAL ROOT') 'guided console demo covers manual checkpoints without running the engine'
 $launcher = Get-Content -LiteralPath (Join-Path $projectRoot 'Start-NoteAir5C.cmd') -Raw

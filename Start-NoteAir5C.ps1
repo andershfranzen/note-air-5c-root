@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('Menu', 'Root', 'Verify', 'Status', 'Setup', 'Restore', 'Privacy', 'Demo')]
+    [ValidateSet('Menu', 'Root', 'Verify', 'Status', 'Setup', 'Restore', 'Privacy', 'StockPrivacy', 'Demo')]
     [string]$Action = 'Menu',
 
     [switch]$AcceptUntestedFirmware,
@@ -254,6 +254,9 @@ function Invoke-Engine {
         [ValidateSet('Balanced', 'Purge', 'Lockdown', 'Strict')][string]$PrivacyProfile = 'Balanced',
         [switch]$AcknowledgePrivacyChanges,
         [switch]$AcknowledgePrivacyRestore,
+        [switch]$AcknowledgeStockPrivacy,
+        [switch]$AcknowledgeStockPrivacyRestore,
+        [switch]$InstallStockPrivacyFirewall,
         [switch]$RebootDevice
     )
     $parameters = @{ Command = $Command }
@@ -265,6 +268,9 @@ function Invoke-Engine {
     if ($Command -eq 'PrivacyHarden') { $parameters.PrivacyProfile = $PrivacyProfile }
     if ($AcknowledgePrivacyChanges) { $parameters.AcknowledgePrivacyChanges = $true }
     if ($AcknowledgePrivacyRestore) { $parameters.AcknowledgePrivacyRestore = $true }
+    if ($AcknowledgeStockPrivacy) { $parameters.AcknowledgeStockPrivacy = $true }
+    if ($AcknowledgeStockPrivacyRestore) { $parameters.AcknowledgeStockPrivacyRestore = $true }
+    if ($InstallStockPrivacyFirewall) { $parameters.InstallStockPrivacyFirewall = $true }
     if ($RebootDevice) { $parameters.RebootDevice = $true }
     if ($AcceptUntestedFirmware -and $Command -in @('Root', 'Resume', 'Backup')) { $parameters.AcceptUntestedFirmware = $true }
     & $script:Engine @parameters | Out-Host
@@ -662,6 +668,137 @@ function Invoke-PrivacyGuide {
     }
 }
 
+function Get-StockPrivacyMenuItems {
+    @(
+        [pscustomobject]@{ Choice = '1'; Title = 'READ-ONLY STOCK AUDIT'; Description = 'Prove locked/green/no-root state and inventory packages, endpoints, and VPN.'; Color = [ConsoleColor]::Cyan }
+        [pscustomobject]@{ Choice = '2'; Title = 'APPLY STOCK PRIVACY'; Description = 'Remove optional apps, disable BOOX Cloud/sync, replace endpoints, and export blocklists.'; Color = [ConsoleColor]::Green }
+        [pscustomobject]@{ Choice = '3'; Title = 'SET UP ROOTLESS FIREWALL'; Description = 'Install/open Rethink, then guide Android always-on VPN and safe application rules.'; Color = [ConsoleColor]::Yellow }
+        [pscustomobject]@{ Choice = '4'; Title = 'VERIFY STOCK PRIVACY'; Description = 'Re-check stock integrity, policy state, VPN lockdown, and expected private-rule counts.'; Color = [ConsoleColor]::Cyan }
+        [pscustomobject]@{ Choice = '5'; Title = 'RESTORE EXACT STOCK STATE'; Description = 'Reinstall/re-enable packages and restore every recorded connectivity setting.'; Color = [ConsoleColor]::Magenta }
+        [pscustomobject]@{ Choice = 'b'; Title = 'BACK'; Description = 'Return to the main assistant menu.'; Color = [ConsoleColor]::DarkGray }
+    )
+}
+
+function Show-StockPrivacyMenuPage {
+    param([Parameter(Mandatory)][object[]]$Items, [int]$SelectedIndex = 0, [switch]$TypedFallback)
+    Write-Banner 'Stock privacy - no root or integrity changes'
+    Write-BoxRule -Top -Color Green
+    Write-BoxLine 'INTEGRITY   Requires locked boot, green verified state, and no Magisk/su.' Green Green
+    Write-BoxLine 'COMPATIBLE  Preserves Google, Microsoft, reader, notes, OTA, and Android UID 1000.' Cyan Green
+    Write-BoxLine 'REVERSIBLE  Exact package and endpoint state is recorded before changes.' Magenta Green
+    Write-BoxRule -Color Green
+    Write-Host ''
+    for ($index = 0; $index -lt $Items.Count; $index++) {
+        $item = $Items[$index]
+        $selected = $index -eq $SelectedIndex
+        $marker = if ($selected) { $script:Glyph.Arrow } else { ' ' }
+        $title = ("  {0}  [{1}]  {2}" -f $marker, $item.Choice.ToUpperInvariant(), $item.Title).PadRight($script:Width)
+        if ($selected) {
+            Write-Styled $title White -BackgroundColor DarkGreen
+            Write-Styled ("       $($item.Description)") Green
+        } else {
+            Write-Styled $title $item.Color
+            Write-Styled ("       $($item.Description)") DarkGray
+        }
+    }
+    Write-Rule
+    if ($TypedFallback) { Write-Styled '  Type 1-5 or B, then press Enter.' DarkGray }
+    else { Write-Styled "  $([char]0x2191) $([char]0x2193) move   $($script:Glyph.Dot)   Enter select   $($script:Glyph.Dot)   1-5 shortcut   $($script:Glyph.Dot)   Esc back" DarkGray }
+    Write-Host ''
+}
+
+function Read-StockPrivacyMenuChoice {
+    $items = @(Get-StockPrivacyMenuItems)
+    if ($script:StockPrivacyMenuIndex -ge $items.Count) { $script:StockPrivacyMenuIndex = 0 }
+    if (-not (Test-ArrowMenuAvailable)) {
+        Show-StockPrivacyMenuPage -Items $items -SelectedIndex $script:StockPrivacyMenuIndex -TypedFallback
+        $answer = Read-Host '  Choose a stock privacy action'
+        if ($null -eq $answer) { return 'b' }
+        return $answer.Trim().ToLowerInvariant()
+    }
+    while ($true) {
+        Show-StockPrivacyMenuPage -Items $items -SelectedIndex $script:StockPrivacyMenuIndex
+        $key = [Console]::ReadKey($true)
+        switch ($key.Key) {
+            { $_ -in @([ConsoleKey]::UpArrow, [ConsoleKey]::LeftArrow) } { $script:StockPrivacyMenuIndex = ($script:StockPrivacyMenuIndex - 1 + $items.Count) % $items.Count; continue }
+            { $_ -in @([ConsoleKey]::DownArrow, [ConsoleKey]::RightArrow, [ConsoleKey]::Tab) } { $script:StockPrivacyMenuIndex = ($script:StockPrivacyMenuIndex + 1) % $items.Count; continue }
+            ([ConsoleKey]::Home) { $script:StockPrivacyMenuIndex = 0; continue }
+            ([ConsoleKey]::End) { $script:StockPrivacyMenuIndex = $items.Count - 1; continue }
+            ([ConsoleKey]::Enter) { return [string]$items[$script:StockPrivacyMenuIndex].Choice }
+            ([ConsoleKey]::Escape) { return 'b' }
+        }
+        $shortcut = ([string]$key.KeyChar).ToLowerInvariant()
+        if ($shortcut -match '^[1-5b]$') { return $shortcut }
+    }
+}
+
+function Invoke-StockPrivacyGuide {
+    $script:StockPrivacyMenuIndex = 0
+    while ($true) {
+        $choice = Read-StockPrivacyMenuChoice
+        try {
+            switch ($choice) {
+                '1' {
+                    Write-Banner 'Read-only stock privacy audit'
+                    Invoke-Engine -Command StockPrivacyAudit -NonInteractive
+                }
+                '2' {
+                    Write-Banner 'Apply stock privacy without root'
+                    Write-Stage 1 'Review reversible changes' @(
+                        'Require the exact Note Air 5C, allow-listed firmware, locked/green boot, and no root.',
+                        'Remove iGet Shop, BOOX AI, BOOX App Market, factory test, and Chromium for user 0.',
+                        'Disable BOOX Cloud and note synchronization without blocking shared Android UID 1000.',
+                        'Replace BOOX NTP and captive-portal URLs with Cloudflare and Google endpoints.',
+                        'Export domain, Adblock, and hard-coded IPv4 lists for DNS/router enforcement.',
+                        'Preserve Google/Microsoft services, reader, notes, OTA, launcher, keyboards, and calibration.'
+                    ) -Color Green
+                    Confirm-ExactPhrase -Phrase 'APPLY STOCK PRIVACY' -Prompt 'The exact current package and setting state is recorded and automatically rolled back on any failed verification.'
+                    Invoke-Engine -Command StockPrivacyApply -AcknowledgeStockPrivacy -NonInteractive
+                }
+                '3' {
+                    Write-Banner 'Set up rootless firewall'
+                    Write-Stage 1 'Compatibility rules' @(
+                        'Rethink uses Android VpnService locally; no boot modification or root is involved.',
+                        'Enable Firewall + DNS, then Android Always-on VPN and Block without VPN.',
+                        'Never block com.onyx or another shared UID 1000 group.',
+                        'Allow Play Store, Play Services, Company Portal, Authenticator, Outlook, and employer VPNs.',
+                        'If your employer later requires Microsoft Tunnel, use the exported router/DNS lists instead.'
+                    ) -Color Yellow
+                    Confirm-ExactPhrase -Phrase 'INSTALL ROOTLESS FIREWALL' -Prompt 'Download the pinned official GitHub APK, verify its GitHub-published SHA-256, install it for user 0, and open it.'
+                    Invoke-Engine -Command StockPrivacyFirewall -InstallStockPrivacyFirewall -NonInteractive
+                    Write-Notice 'Android requires on-device approval for installing an app and granting VPN control; the assistant cannot bypass those security dialogs.'
+                }
+                '4' {
+                    Write-Banner 'Verify stock privacy and VPN lockdown'
+                    Write-Stage 1 'Read-only verification' @(
+                        'Require locked boot, green verified state, and no Magisk or su.',
+                        'Verify every package and connectivity change against the selected policy.',
+                        'Verify pinned Rethink, Android Always-on VPN, Block without VPN, and a validated non-bypassable tunnel.',
+                        'Show the expected Rethink counts: 35 domains, one IPv4 rule, and 12 BOOX application rules.'
+                    ) -Color Cyan
+                    Invoke-Engine -Command StockPrivacyVerify -NonInteractive
+                }
+                '5' {
+                    Write-Banner 'Restore exact pre-privacy state'
+                    Write-Stage 1 'Restore recorded stock state' @(
+                        'Reinstall or re-enable all six packages exactly as originally recorded.',
+                        'Restore BOOX NTP and captive-portal settings byte-for-byte.',
+                        'Leave bootloader, verified boot, userdata, and installed third-party apps untouched.'
+                    ) -Color Magenta
+                    Confirm-ExactPhrase -Phrase 'RESTORE STOCK PRIVACY' -Prompt 'Only the newest applied record matching this serial and firmware is accepted.'
+                    Invoke-Engine -Command StockPrivacyRestore -AcknowledgeStockPrivacyRestore -NonInteractive
+                }
+                { $_ -in @('b', 'back', 'q') } { return }
+                default { Write-Notice 'Choose 1-5 or B.'; Start-Sleep -Seconds 1; continue }
+            }
+        } catch {
+            Write-Host ''
+            Write-Failure $_.Exception.Message
+        }
+        Wait-ForEnter 'Press Enter to return to Stock Privacy'
+    }
+}
+
 function Get-MenuItems {
     @(
         [pscustomobject]@{ Choice = '1'; Title = 'START / CONTINUE ROOT'; Description = 'Guided backup, patch, unlock, flash, reset, and verification.'; Color = [ConsoleColor]::Cyan }
@@ -671,6 +808,7 @@ function Get-MenuItems {
         [pscustomobject]@{ Choice = '5'; Title = 'RETURN FULLY TO STOCK'; Description = 'Undo privacy changes, restore stock boot, relock, and reset userdata.'; Color = [ConsoleColor]::Yellow }
         [pscustomobject]@{ Choice = '6'; Title = 'SAFE UI PREVIEW'; Description = 'Walk every screen without touching the tablet.'; Color = [ConsoleColor]::White }
         [pscustomobject]@{ Choice = '7'; Title = 'PRIVACY HARDENING'; Description = 'Audit, firewall, debloat, or restore BOOX network privacy.'; Color = [ConsoleColor]::Magenta }
+        [pscustomobject]@{ Choice = '8'; Title = 'STOCK PRIVACY  (NO ROOT)'; Description = 'Reversible ADB debloat, cloud-sync disable, endpoints, DNS, and firewall guide.'; Color = [ConsoleColor]::Green }
         [pscustomobject]@{ Choice = 'q'; Title = 'QUIT'; Description = 'Close the assistant without changing the tablet.'; Color = [ConsoleColor]::DarkGray }
     )
 }
@@ -716,9 +854,9 @@ function Show-MenuPage {
 
     Write-Rule
     if ($TypedFallback) {
-        Write-Styled '  Type 1-7 or Q, then press Enter.' DarkGray
+        Write-Styled '  Type 1-8 or Q, then press Enter.' DarkGray
     } else {
-        Write-Styled "  $([char]0x2191) $([char]0x2193) move   $($script:Glyph.Dot)   Enter select   $($script:Glyph.Dot)   1-7 shortcut   $($script:Glyph.Dot)   Esc quit" DarkGray
+        Write-Styled "  $([char]0x2191) $([char]0x2193) move   $($script:Glyph.Dot)   Enter select   $($script:Glyph.Dot)   1-8 shortcut   $($script:Glyph.Dot)   Esc quit" DarkGray
     }
     Write-Host ''
 }
@@ -751,7 +889,7 @@ function Read-MenuChoice {
             ([ConsoleKey]::Escape) { return 'q' }
         }
         $shortcut = ([string]$key.KeyChar).ToLowerInvariant()
-        if ($shortcut -match '^[1-7q]$') { return $shortcut }
+        if ($shortcut -match '^[1-8q]$') { return $shortcut }
     }
 }
 
@@ -773,8 +911,9 @@ function Show-Menu {
                 '5' { Invoke-GuidedRestore }
                 '6' { Show-Demo }
                 '7' { Invoke-PrivacyGuide }
+                '8' { Invoke-StockPrivacyGuide }
                 { $_ -in @('q', 'quit', 'exit') } { return }
-                default { Write-Notice 'Choose 1-7 or Q.'; Start-Sleep -Seconds 1; continue }
+                default { Write-Notice 'Choose 1-8 or Q.'; Start-Sleep -Seconds 1; continue }
             }
         } catch {
             Write-Host ''
@@ -801,5 +940,6 @@ switch ($Action) {
     'Setup'   { Invoke-SetupGuide }
     'Restore' { Invoke-GuidedRestore }
     'Privacy' { Invoke-PrivacyGuide }
+    'StockPrivacy' { Invoke-StockPrivacyGuide }
     'Demo'    { Show-Demo }
 }
