@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "boox-privacy",
+  "blockedHosts": [
+    "send2boox.com",
+    "data.boox.com",
+    "log.boox.com",
+    "cb.send2boox.com",
+    "dev.send2boox.com",
+    "ntp.send2boox.com",
+    "index.send2boox.com",
+    "index1.send2boox.com",
+    "index2.send2boox.com",
+    "index3.send2boox.com",
+    "index4.send2boox.com",
+    "index5.send2boox.com",
+    "push.boox.com",
+    "en-data.boox.com",
+    "en-lon.boox.com",
+    "eur.boox.com",
+    "cb.boox.com",
+    "eurcb.boox.com",
+    "en-rom.boox.com",
+    "en-ntp.boox.com",
+    "ntp1.boox.com",
+    "index.boox.com",
+    "index1.boox.com",
+    "index2.boox.com",
+    "index3.boox.com",
+    "index4.boox.com",
+    "index5.boox.com",
+    "en-data.onyx-international.cn",
+    "ntp.onyx-international.cn",
+    "ntp1.onyx-international.cn",
+    "ntp2.onyx-international.cn",
+    "ntp3.onyx-international.cn",
+    "ntp4.onyx-international.cn",
+    "ntp5.onyx-international.cn",
+    "oss-cn-shenzhen.aliyuncs.com",
+    "logs.luojilab.com"
+  ],
+  "blockedIpv4": [
+    "119.23.143.188"
+  ],
+  "settings": [
+    {
+      "namespace": "global",
+      "name": "ntp_server",
+      "value": "time.cloudflare.com"
+    },
+    {
+      "namespace": "global",
+      "name": "captive_portal_http_url",
+      "value": "http://connectivitycheck.gstatic.com/generate_204"
+    },
+    {
+      "namespace": "global",
+      "name": "captive_portal_https_url",
+      "value": "https://connectivitycheck.gstatic.com/generate_204"
+    },
+    {
+      "namespace": "global",
+      "name": "captive_portal_http_url_config",
+      "value": "{\"captivePortalHttpUrls\":[\"http://connectivitycheck.gstatic.com/generate_204\"],\"captivePortalHttpsUrls\":[\"https://connectivitycheck.gstatic.com/generate_204\"],\"defaultCaptivePortalFallbackUrls\":[\"http://connectivitycheck.android.com/generate_204\"]}"
+    }
+  ],
+  "profiles": {
+    "balanced": {
+      "description": "Blocks known BOOX endpoints, removes cloud/commercial extras, preserves core reading, notes, keyboards, OTA, and LAN EasyTransfer.",
+      "packages": [
+        { "id": "com.onyx.igetshop", "action": "uninstall-user", "reason": "DeDao storefront with commercial analytics SDKs" },
+        { "id": "com.onyx.aiassistant", "action": "uninstall-user", "reason": "Optional cloud AI that uploads prompts and document context when used" },
+        { "id": "com.onyx.appmarket", "action": "uninstall-user", "reason": "Optional BOOX app store that sends device and search metadata" },
+        { "id": "com.onyx.android.production.test", "action": "uninstall-user", "reason": "Factory production-test application" },
+        { "id": "org.chromium.chrome", "action": "uninstall-user", "reason": "Vendor Chromium 111 build; replace with a maintained browser" }
+      ]
+    },
+    "purge": {
+      "description": "Balanced policy plus a reversible Magisk systemless purge of five optional system APK directories. Factory files remain underneath for recovery and OTA safety.",
+      "systemlessPurgePackages": [
+        "com.onyx.igetshop",
+        "com.onyx.aiassistant",
+        "com.onyx.appmarket",
+        "com.onyx.android.production.test",
+        "org.chromium.chrome"
+      ],
+      "packages": [
+        { "id": "com.onyx.igetshop", "action": "uninstall-user", "reason": "DeDao storefront with commercial analytics SDKs" },
+        { "id": "com.onyx.aiassistant", "action": "uninstall-user", "reason": "Optional cloud AI that uploads prompts and document context when used" },
+        { "id": "com.onyx.appmarket", "action": "uninstall-user", "reason": "Optional BOOX app store that sends device and search metadata" },
+        { "id": "com.onyx.android.production.test", "action": "uninstall-user", "reason": "Factory production-test application" },
+        { "id": "org.chromium.chrome", "action": "uninstall-user", "reason": "Vendor Chromium 111 build; replace with a maintained browser" }
+      ]
+    },
+    "lockdown": {
+      "description": "Purge plus kernel-enforced WAN denial for every com.onyx package UID, including shared Android system UID 1000. Third-party app UIDs and local-network traffic remain available.",
+      "systemlessPurgePackages": [
+        "com.onyx.igetshop",
+        "com.onyx.aiassistant",
+        "com.onyx.appmarket",
+        "com.onyx.android.production.test",
+        "org.chromium.chrome",
+        "com.onyx.android.ksync"
+      ],
+      "packages": [
+        { "id": "com.onyx.igetshop", "action": "uninstall-user", "reason": "DeDao storefront with commercial analytics SDKs" },
+        { "id": "com.onyx.aiassistant", "action": "uninstall-user", "reason": "Optional cloud AI that uploads prompts and document context when used" },
+        { "id": "com.onyx.appmarket", "action": "uninstall-user", "reason": "Optional BOOX app store that sends device and search metadata" },
+        { "id": "com.onyx.android.production.test", "action": "uninstall-user", "reason": "Factory production-test application" },
+        { "id": "org.chromium.chrome", "action": "uninstall-user", "reason": "Vendor Chromium 111 build; replace with a maintained browser" },
+        { "id": "com.onyx.android.ksync", "action": "disable-user", "reason": "BOOX cloud synchronization; systemlessly removed because it shares UID 1000" }
+      ]
+    },
+    "strict": {
+      "description": "Balanced policy plus BOOX cloud sync, transfer, mail, and replaceable stock utilities. Core reader, notes, keyboards, OTA, launcher, and calibration remain.",
+      "packages": [
+        { "id": "com.onyx.igetshop", "action": "uninstall-user", "reason": "DeDao storefront with commercial analytics SDKs" },
+        { "id": "com.onyx.aiassistant", "action": "uninstall-user", "reason": "Optional cloud AI" },
+        { "id": "com.onyx.appmarket", "action": "uninstall-user", "reason": "Optional BOOX app store" },
+        { "id": "com.onyx.android.production.test", "action": "uninstall-user", "reason": "Factory production-test application" },
+        { "id": "org.chromium.chrome", "action": "uninstall-user", "reason": "Vendor Chromium 111 build" },
+        { "id": "com.onyx.android.ksync", "action": "disable-user", "reason": "BOOX cloud synchronization; shared system UID makes UID firewalling unsafe" },
+        { "id": "com.onyx.easytransfer", "action": "uninstall-user", "reason": "Optional local/WeChat transfer feature" },
+        { "id": "com.onyx.mail", "action": "uninstall-user", "reason": "Replaceable stock mail client" },
+        { "id": "com.onyx.voicerecorder", "action": "uninstall-user", "reason": "Replaceable stock recorder" },
+        { "id": "com.onyx.musicplayer", "action": "uninstall-user", "reason": "Replaceable stock music player" },
+        { "id": "com.onyx.gallery", "action": "uninstall-user", "reason": "Replaceable stock gallery" },
+        { "id": "com.onyx.calculator", "action": "uninstall-user", "reason": "Replaceable stock calculator" },
+        { "id": "com.onyx.clock", "action": "uninstall-user", "reason": "Replaceable stock clock" },
+        { "id": "com.onyx.dict", "action": "uninstall-user", "reason": "Replaceable stock dictionary" }
+      ]
+    }
+  },
+  "networkDeniedPackages": [
+    "com.onyx.igetshop",
+    "com.onyx.aiassistant",
+    "com.onyx.appmarket",
+    "org.chromium.chrome"
+  ],
+  "lanOnlyPackages": [
+    "com.onyx.easytransfer"
+  ],
+  "vendorWanDeniedPackagePrefix": "com.onyx",
+  "protectedPackages": [
+    "com.onyx",
+    "com.onyx.kreader",
+    "com.onyx.android.note",
+    "com.onyx.kime",
+    "com.onyx.latinime",
+    "com.onyx.android.onyxotaservice",
+    "com.onyx.tscalibration"
+  ]
+}

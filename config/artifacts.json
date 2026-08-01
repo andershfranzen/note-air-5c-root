@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "artifacts": [
+    {
+      "id": "android-platform-tools",
+      "kind": "archive",
+      "version": "37.0.1",
+      "fileName": "platform-tools_r37.0.1-win.zip",
+      "url": "https://dl.google.com/android/repository/platform-tools_r37.0.1-win.zip",
+      "bytes": 8044989,
+      "sha256": "45f4d63113e895ebde0c90f194099a4676b6ac653bd28d54314a9e022bbc1a99",
+      "trust": "upstream",
+      "source": "https://developer.android.com/tools/releases/platform-tools"
+    },
+    {
+      "id": "android-platform-tools-linux",
+      "kind": "archive",
+      "version": "37.0.1",
+      "fileName": "platform-tools_r37.0.1-linux.zip",
+      "url": "https://dl.google.com/android/repository/platform-tools_r37.0.1-linux.zip",
+      "bytes": 9054187,
+      "sha256": "d230f13842f60f782a8645f9c813f8f845bf36089ea7289f28c48f17979313f1",
+      "trust": "upstream",
+      "source": "https://developer.android.com/tools/releases/platform-tools"
+    },
+    {
+      "id": "android-platform-tools-darwin",
+      "kind": "archive",
+      "version": "37.0.1",
+      "fileName": "platform-tools_r37.0.1-darwin.zip",
+      "url": "https://dl.google.com/android/repository/platform-tools_r37.0.1-darwin.zip",
+      "bytes": 16110554,
+      "sha256": "ee39ad5967e95c2a07f04dbcbde96b1a0c916ba376096db5d2f498b7727a5d1d",
+      "trust": "upstream",
+      "source": "https://developer.android.com/tools/releases/platform-tools"
+    },
+    {
+      "id": "magisk",
+      "kind": "apk",
+      "version": "30.7",
+      "fileName": "Magisk-v30.7.apk",
+      "url": "https://github.com/topjohnwu/Magisk/releases/download/v30.7/Magisk-v30.7.apk",
+      "bytes": 11613864,
+      "sha256": "e0d32d2123532860f97123d927b1bb86c4e08e6fd8a48bfc6b5bee0afae9ebd5",
+      "trust": "upstream",
+      "source": "https://github.com/topjohnwu/Magisk/releases/tag/v30.7"
+    },
+    {
+      "id": "sm-bitra-firehose",
+      "kind": "binary",
+      "version": "bkerler-loaders-01c2eb2",
+      "fileName": "0000000000000000_bdaf51b59ba21d8a_fhprg.bin",
+      "url": "https://raw.githubusercontent.com/bkerler/Loaders/01c2eb21f52b058a43c31c2c1a1c658abe45a2f1/lenovo_motorola/0000000000000000_bdaf51b59ba21d8a_fhprg.bin",
+      "bytes": 759504,
+      "sha256": "1eadbcd4c5e64d7f7ae6b13f51f548148d53c7163fe960e50840e03daa742e73",
+      "trust": "upstream",
+      "source": "https://github.com/bkerler/Loaders/tree/01c2eb21f52b058a43c31c2c1a1c658abe45a2f1"
+    },
+    {
+      "id": "frp-oemunlock",
+      "kind": "community-archive",
+      "version": "2026-01-14",
+      "fileName": "frp_oemunlock.zip",
+      "url": "https://github.com/user-attachments/files/24603170/frp_oemunlock.zip",
+      "bytes": 844,
+      "sha256": "16da78e083f4e8c901820d2a2a46d90efb1586fbbdd69d68f11fa9abd49c6d18",
+      "extractedFile": "frp_oemunlock.img",
+      "extractedBytes": 524288,
+      "extractedSha256": "2e7ce410925bec615e906324fbaca789d6b8b0d866b84201c389b018a0642f3b",
+      "trust": "community",
+      "source": "https://github.com/jdkruzr/BooxPalma2RootGuide/issues/9#issuecomment-3747273248"
+    },
+    {
+      "id": "noteair5c-ablmod",
+      "kind": "community-archive",
+      "version": "2026-01-14",
+      "fileName": "ablmod.zip",
+      "url": "https://github.com/user-attachments/files/24618353/ablmod.zip",
+      "bytes": 140674,
+      "sha256": "8b7baabfe064ff3e79f1343bdf4d3628fcd49df6a8efc15996ca6eac25313dba",
+      "extractedFile": "ablmod.img",
+      "extractedBytes": 151552,
+      "extractedSha256": "60ca60d7ccc6288b939b1f0e822c437ffc94dc8aa9078ac68297439862385dcb",
+      "trust": "community",
+      "source": "https://github.com/jdkruzr/BooxPalma2RootGuide/issues/9#issuecomment-3750339416"
+    }
+  ]
+}

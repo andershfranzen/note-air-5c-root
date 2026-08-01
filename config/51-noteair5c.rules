@@ -1,0 +1,5 @@
+# BOOX Note Air 5C in Android / ADB mode (Onyx/Vivo USB vendor ID).
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="2d95", MODE="0660", TAG+="uaccess"
+
+# Qualcomm Emergency Download mode. Keep ModemManager away from this interface.
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="05c6", ATTRS{idProduct}=="9008", MODE="0660", TAG+="uaccess", ENV{ID_MM_DEVICE_IGNORE}="1"

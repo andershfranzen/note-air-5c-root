@@ -1,0 +1,21 @@
+name: Self-test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run offline safety tests
+        shell: pwsh
+        run: ./Root-NoteAir5C.ps1 -Command SelfTest -NonInteractive

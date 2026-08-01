@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "id": "noteair5c-4.2-rel-0402",
+      "model": "NoteAir5C",
+      "fingerprintPattern": "^Onyx/NoteAir5C/NoteAir5C:11/2026-04-02_19-54_4\\.2-rel_0402_75ba17df0/2413:user/release-keys$",
+      "status": "community-confirmed",
+      "rootEnabled": true,
+      "notes": "Community reports confirm Magisk 30.7 root on this exact build. The script still backs up and patches the device's own active boot image."
+    },
+    {
+      "id": "noteair5c-4.2.1-rel-0702",
+      "model": "NoteAir5C",
+      "fingerprintPattern": "^Onyx/NoteAir5C/NoteAir5C:11/2026-07-02_19-03_4\\.2\\.1-rel_0702_038ed12af/3055:user/release-keys$",
+      "status": "device-validated",
+      "rootEnabled": true,
+      "notes": "The complete backup, two-byte devinfo unlock, active boot_b Magisk 30.7 patch, factory reset, and uid=0 root-shell verification completed successfully on this exact build on 2026-08-01."
+    },
+    {
+      "id": "noteair5c-4.1.2-rel-1205",
+      "model": "NoteAir5C",
+      "fingerprintPattern": "^Onyx/NoteAir5C/NoteAir5C:11/2025-12-05_14-39_4\\.1\\.2-rel_1205_da3fc7661/1324:user/release-keys$",
+      "status": "recovery-source-only",
+      "rootEnabled": false,
+      "notes": "Known stock firmware, retained as a diagnostic match. The automated root path is not enabled by default."
+    }
+  ]
+}
