@@ -505,8 +505,8 @@ rm -rf /data/local/tmp/boox-privacy-stage
         $packageUidOutput = Invoke-PrivacyShell -Target $Context.Target -Arguments @('pm', 'list', 'packages', '-U')
         $vendorUids = @($packageUidOutput.Lines | ForEach-Object {
             if ($_ -match '^package:com\.onyx(?:\.[A-Za-z0-9_.]+)?\s+uid:(\d+)\s*$') { [int]$Matches[1] }
-        } | Sort-Object -Unique)
-        if ($vendorUids.Count -lt 10 -or 1000 -notin $vendorUids) {
+        } | Where-Object { $_ -ge 10000 } | Sort-Object -Unique)
+        if ($vendorUids.Count -lt 10 -or 1000 -in $vendorUids) {
             throw "Vendor lockdown UID inventory was incomplete; found: $($vendorUids -join ', ')"
         }
         $uidContent = ($vendorUids -join "`n") + "`n"

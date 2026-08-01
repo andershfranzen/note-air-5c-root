@@ -93,7 +93,7 @@
       ]
     },
     "lockdown": {
-      "description": "Purge plus kernel-enforced WAN denial for every com.onyx package UID, including shared Android system UID 1000. Third-party app UIDs and local-network traffic remain available.",
+      "description": "Purge plus kernel-enforced WAN denial for dedicated com.onyx application UIDs. Shared Android system UIDs are excluded so DNS, Google sign-in, and third-party apps keep working.",
       "systemlessPurgePackages": [
         "com.onyx.igetshop",
         "com.onyx.aiassistant",

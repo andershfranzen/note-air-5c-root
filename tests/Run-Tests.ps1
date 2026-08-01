@@ -154,7 +154,8 @@ $serviceScript = Get-Content -LiteralPath (Join-Path $projectRoot 'privacy/magis
 Assert-True ($serviceScript -match 'BOOX_PRIVACY' -and $serviceScript -match '119\.23\.143\.188' -and $serviceScript -match '\-lt 10000') 'privacy firewall has isolated chain, bootstrap block, and system-UID guard'
 Assert-True ($serviceScript -match '192\.168\.0\.0/16' -and $serviceScript -match 'fc00::/7' -and $serviceScript -match 'com\.onyx\.easytransfer') 'privacy firewall preserves local EasyTransfer on IPv4 and IPv6'
 Assert-True ($serviceScript -match 'sys\.boot_completed' -and $serviceScript -match 'sleep 30' -and $serviceScript -match 'time\.cloudflare\.com') 'privacy service waits for BOOX startup and reapplies connectivity settings'
-Assert-True ($serviceScript -match 'deny_wan_uid' -and $serviceScript -match 'lockdown-uids\.conf' -and $serviceScript -match 'com\\\.onyx' -and $serviceScript -match 'uid=\$uid') 'vendor lockdown denies discovered BOOX UIDs including the recorded early-boot inventory'
+Assert-True ($serviceScript -match 'uid_for com\.onyx\)' -and $serviceScript -notmatch 'uid_for com\.onyx\.easytransfer\)" \]') 'privacy startup waits on a protected core package rather than an optional removed package'
+Assert-True ($serviceScript -match 'deny_wan_uid' -and $serviceScript -match 'lockdown-uids\.conf' -and $serviceScript -match 'com\\\.onyx' -and $serviceScript -match 'refused shared/system WAN rule') 'vendor lockdown denies dedicated BOOX UIDs while excluding shared Android system UIDs'
 Assert-True ($serviceScript -match '255\.255\.255\.255/32' -and $serviceScript -match 'ff00::/8') 'vendor lockdown preserves local broadcast and multicast discovery'
 foreach ($profileName in @('balanced', 'purge', 'lockdown', 'strict')) {
     $expectedLines = @($privacyPolicy.profiles.$profileName.packages | ForEach-Object { "$($_.action) $($_.id)" })
@@ -173,6 +174,7 @@ $privacyErrors = $null
 [void][System.Management.Automation.Language.Parser]::ParseFile($privacyModulePath, [ref]$privacyTokens, [ref]$privacyErrors)
 Assert-True ($privacyErrors.Count -eq 0) 'privacy module parses cleanly'
 $privacySource = Get-Content -LiteralPath $privacyModulePath -Raw
+Assert-True ($privacySource -match 'Where-Object \{ \$_ -ge 10000 \}' -and $privacySource -match '1000 -in \$vendorUids') 'Lockdown inventory persists application UIDs only and rejects accidental shared UID 1000 inclusion'
 Assert-True ($privacySource -match '\.replace' -and $privacySource -match '\^/system/\(app\|priv-app\)/') 'systemless purge uses Magisk replace markers behind an exact APK-path allowlist'
 Assert-True ($privacySource -match 'Backup-PrivacyHomeLayout' -and $privacySource -match 'Restore-PrivacyHomeLayout' -and $privacySource -match 'Set-PrivacyCleanHomeLayout') 'privacy recovery records and restores the BOOX launcher layout'
 $homeHelperSource = Get-Content -LiteralPath (Join-Path $projectRoot 'src/boox_home_layout.py') -Raw

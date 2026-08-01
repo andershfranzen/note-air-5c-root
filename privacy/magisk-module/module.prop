@@ -1,6 +1,6 @@
 id=boox-privacy
 name=BOOX Privacy Firewall
-version=1.2.0
-versionCode=120
+version=1.3.0
+versionCode=130
 author=Note Air 5C Root Assistant
-description=Systemless BOOX endpoint blocking, reversible APK purge, and optional all-vendor WAN lockdown.
+description=Systemless BOOX endpoint blocking, reversible APK purge, and compatible vendor-app WAN lockdown.

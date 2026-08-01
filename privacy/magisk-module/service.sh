@@ -45,13 +45,17 @@ deny_package() {
     log "denied network: $package uid=$uid via $tool"
 }
 
-# Lockdown deliberately includes Android's shared UID 1000 because the BOOX
-# launcher and cloud-sync service run under it. Local/LAN destinations remain
-# reachable; every other destination is rejected in the kernel.
+# Lockdown targets application UIDs only. BOOX packages can share Android UID
+# 1000 with core networking services, so denying that UID breaks unrelated apps
+# (including DNS and account registration) and is never safe.
 deny_wan_uid() {
     tool=$1
     uid=$2
     case "$uid" in ''|*[!0-9]*) return ;; esac
+    if [ "$uid" -lt 10000 ]; then
+        log "refused shared/system WAN rule: uid=$uid via $tool"
+        return
+    fi
     if [ "$tool" = iptables ]; then
         case " $WAN_UIDS_V4 " in *" $uid "*) return ;; esac
         WAN_UIDS_V4="$WAN_UIDS_V4 $uid"
@@ -161,7 +165,7 @@ fi
 # Magisk late_start can run before Package Manager exposes application IDs.
 # Wait at most five minutes; never hold Android's boot indefinitely.
 attempt=0
-while [ "$(getprop sys.boot_completed)" != "1" ] || [ -z "$(uid_for com.onyx.easytransfer)" ]
+while [ "$(getprop sys.boot_completed)" != "1" ] || [ -z "$(uid_for com.onyx)" ]
 do
     attempt=$((attempt + 1))
     if [ "$attempt" -ge 150 ]; then

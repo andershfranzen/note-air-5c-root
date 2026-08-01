@@ -497,7 +497,7 @@ function Get-PrivacyMenuItems {
         [pscustomobject]@{ Choice = '1'; Title = 'READ-ONLY PRIVACY AUDIT'; Description = 'Inventory packages, UIDs, settings, Magisk, hosts, and firewall state.'; Color = [ConsoleColor]::Cyan }
         [pscustomobject]@{ Choice = '2'; Title = 'APPLY BALANCED  (RECOMMENDED)'; Description = 'Block BOOX endpoints and remove cloud/commercial extras; keep core apps and LAN transfer.'; Color = [ConsoleColor]::Green }
         [pscustomobject]@{ Choice = '3'; Title = 'SYSTEMLESS PURGE'; Description = 'Balanced plus fully hide five optional system APKs; reversible and OTA-safe.'; Color = [ConsoleColor]::Magenta }
-        [pscustomobject]@{ Choice = '4'; Title = 'VENDOR LOCKDOWN  (MAX PRIVACY)'; Description = 'Purge cloud sync and deny WAN to every BOOX UID; third-party apps keep internet.'; Color = [ConsoleColor]::Red }
+        [pscustomobject]@{ Choice = '4'; Title = 'VENDOR LOCKDOWN  (COMPATIBLE)'; Description = 'Purge cloud sync and deny dedicated BOOX app UIDs without blocking Android services.'; Color = [ConsoleColor]::Red }
         [pscustomobject]@{ Choice = '5'; Title = 'APPLY STRICT'; Description = 'Balanced plus cloud sync, transfer, mail, and replaceable stock utilities.'; Color = [ConsoleColor]::Yellow }
         [pscustomobject]@{ Choice = '6'; Title = 'APPLY CLEAN HOME LAYOUT'; Description = 'Tools folder; only Play Store + Magisk on desktop; Storage + Settings in dock.'; Color = [ConsoleColor]::Blue }
         [pscustomobject]@{ Choice = '7'; Title = 'RESTORE PREVIOUS STATE'; Description = 'Remove the firewall and restore recorded package, settings, and launcher layout.'; Color = [ConsoleColor]::Cyan }
@@ -603,11 +603,11 @@ function Invoke-PrivacyGuide {
                 }
                 '4' {
                     Write-Banner 'Apply BOOX vendor lockdown'
-                    Write-Stage 1 'Review maximum-privacy changes' @(
+                    Write-Stage 1 'Review compatible lockdown changes' @(
                         'Includes Purge and also systemlessly removes BOOX cloud sync.',
-                        'Kernel firewall denies WAN to every com.onyx package UID,',
-                        'including shared system UID 1000; local-network traffic remains.',
-                        'Third-party apps retain internet under their separate Android UIDs.',
+                        'Kernel firewall denies WAN to dedicated com.onyx application UIDs.',
+                        'Shared Android/system UIDs are excluded so core networking works.',
+                        'Google sign-in, DNS, and third-party apps retain normal internet.',
                         'BOOX Cloud, sync, online OTA, and BOOX-app internet will not work.',
                         'The current launcher is backed up and the clean home layout applied.'
                     ) -Color Red
